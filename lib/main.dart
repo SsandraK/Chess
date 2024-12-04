@@ -1,4 +1,4 @@
-import 'package:chess/screens/home_screen.dart';
+import 'package:chess/screens/menu_screen.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -8,7 +8,6 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -19,7 +18,7 @@ class MyApp extends StatelessWidget {
         colorScheme:const ColorScheme.highContrastLight(),
         useMaterial3: true,
       ),
-      home:const HomeScreen(),
+      home:const MenuScreen(),
     );
   }
 }
