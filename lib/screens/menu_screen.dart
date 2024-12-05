@@ -1,5 +1,7 @@
+import 'package:chess/providers/game_provider.dart';
 import 'package:chess/screens/game_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
@@ -11,6 +13,7 @@ class MenuScreen extends StatefulWidget {
 class _MenuScreenState extends State<MenuScreen> {
   @override
   Widget build(BuildContext context) {
+    final gameProvider = context.read<GameProvider>();
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 224, 246, 157),
@@ -21,13 +24,14 @@ class _MenuScreenState extends State<MenuScreen> {
         child: GridView.count(
           shrinkWrap: true,
           crossAxisCount: 1, 
-          mainAxisSpacing: 16.0, // Space between rows
-          crossAxisSpacing: 16.0, // Space between columns
+          mainAxisSpacing: 16.0, 
+          crossAxisSpacing: 16.0, 
           children: [
             Card(
               color: const Color.fromARGB(255, 241, 245, 241),
               child: InkWell(
                 onTap: () {
+                  gameProvider.setVsComputer(value: true);
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const GameScreen()),
@@ -47,6 +51,7 @@ class _MenuScreenState extends State<MenuScreen> {
               color: const Color.fromARGB(255, 241, 245, 241),
               child: InkWell(
                 onTap: () {
+                 gameProvider.setVsComputer(value: false);
                   // Navigate to another screen
                   // Navigator.push(
                   //   context,

@@ -1,150 +1,83 @@
-import 'dart:math';
-import 'package:bishop/bishop.dart' as bishop;
+import 'package:chess/providers/game_provider.dart';
+import 'package:chess/widgets/piecees_widget.dart';
 import 'package:flutter/material.dart';
-import 'package:square_bishop/square_bishop.dart';
+import 'package:provider/provider.dart';
 import 'package:squares/squares.dart';
 
-class GameScreen extends StatefulWidget {
+
+class GameScreen extends StatelessWidget {
   const GameScreen({super.key});
 
   @override
-  State<GameScreen> createState() => _GameScreenState();
-}
-
-class _GameScreenState extends State<GameScreen> {
-  late bishop.Game game;
-  late SquaresState state;
-  int player = Squares.white;
-  bool aiThinking = false;
-  bool flipBoard = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _resetGame(false);
-  }
-
-  void _resetGame([bool setstate = true]) {
-    game = bishop.Game(variant: bishop.Variant.standard());
-    state = game.squaresState(player);
-    if (setstate) setState(() {});
-  }
-
-  void _flipBoard() => setState(() => flipBoard = !flipBoard);
-
-  void _onMove(Move move) async {
-    bool result = game.makeSquaresMove(move);
-    if (result) {
-      setState(() => state = game.squaresState(player));
-    }
-
-    if (state.state == PlayState.theirTurn && !aiThinking) {
-      setState(() => aiThinking = true);
-      await Future.delayed(
-          Duration(milliseconds: Random().nextInt(4750) + 250));
-      game.makeRandomMove();
-      setState(() {
-        aiThinking = false;
-        state = game.squaresState(player);
-      });
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar:AppBar(
-  leading: IconButton(
-    onPressed: () {
-      Navigator.pop(context); 
-    },
-    icon: const Icon(Icons.arrow_back),
-  ),
-  title: const Text('Chess'),
-  backgroundColor: const Color.fromARGB(255, 224, 246, 157),
-  actions: [
-    IconButton(
-      onPressed: _flipBoard, // Flip board 
-      icon: const Icon(Icons.rotate_left),
-    ),
-    OutlinedButton(
-      onPressed: () => _resetGame(true), 
-      child: const Text('New Game'),
-    ),
-  ],
-),
+    final gameProvider = Provider.of<GameProvider>(context);
 
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          icon: const Icon(Icons.arrow_back),
+        ),
+        title: const Text('Chess'),
+        backgroundColor: const Color.fromARGB(255, 224, 246, 157),
+        actions: [
+          IconButton(
+            onPressed: gameProvider.flipTheBoard, // Flip the board
+            icon: const Icon(Icons.rotate_left),
+          ),
+          OutlinedButton(
+            onPressed: () => gameProvider.resetGame(), // Reset the game
+            child: const Text('New Game'),
+          ),
+        ],
+      ),
       body: Center(
         child: Column(
-        //  mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            //Opponents info
+            // Opponent's info
             const ListTile(
               leading: CircleAvatar(
                 radius: 20,
                 backgroundImage: AssetImage('assets/images/user.png'),
               ),
-              title: Text('Player2 name'),
+              title: Text('Player 2'),
             ),
 
+            // Chessboard
             Padding(
               padding: const EdgeInsets.all(4.0),
               child: BoardController(
-                state: flipBoard ? state.board.flipped() : state.board,
-                playState: state.state,
+                state: gameProvider.flipBoard
+                    ? gameProvider.state.board.flipped()
+                    : gameProvider.state.board,
+                playState: gameProvider.state.state,
                 theme: BoardTheme.brown,
-                moves: state.moves,
-                onMove: _onMove,
-                onPremove: _onMove,
+                moves: gameProvider.state.moves,
+                onMove: (move) => gameProvider.onMove(move), 
+            // TODO: check gameOver!!
+                onPremove: (move) => gameProvider.onMove(move),
                 onSetPremove: (move) {
-                  if (move != null) _onMove(move);
-                  debugPrint('Premove set: $move');
+                  if (move != null) gameProvider.onMove(move);
                 },
                 markerTheme: MarkerTheme(
                   empty: MarkerTheme.dot,
                   piece: MarkerTheme.corners(),
                 ),
                 promotionBehaviour: PromotionBehaviour.autoPremove,
-                pieceSet: PieceSet(
-                  pieces: {
-                    'P': (context) =>
-                        Image.asset('assets/pieces/white_pawn.png'),
-                    'N': (context) =>
-                        Image.asset('assets/pieces/white_knight.png'),
-                    'B': (context) =>
-                        Image.asset('assets/pieces/white_bishops.png'),
-                    'R': (context) =>
-                        Image.asset('assets/pieces/white_rooks.png'),
-                    'Q': (context) =>
-                        Image.asset('assets/pieces/white_queen.png'),
-                    'K': (context) =>
-                        Image.asset('assets/pieces/white_king.png'),
-                    'p': (context) =>
-                        Image.asset('assets/pieces/black_pawn.png'),
-                    'n': (context) =>
-                        Image.asset('assets/pieces/black_knight.png'),
-                    'b': (context) =>
-                        Image.asset('assets/pieces/black_bishops.png'),
-                    'r': (context) =>
-                        Image.asset('assets/pieces/black_rooks.png'),
-                    'q': (context) =>
-                        Image.asset('assets/pieces/black_queen.png'),
-                    'k': (context) =>
-                        Image.asset('assets/pieces/black_king.png'),
-                  },
-                ),
+               pieceSet:getChessPieceSet(),
               ),
             ),
 
-            //Current players info
+            // Player's info
             const ListTile(
               leading: CircleAvatar(
                 radius: 20,
                 backgroundImage: AssetImage('assets/images/user01.png'),
               ),
-              title: Text('Player1 name'),
+              title: Text('Player 1'),
             ),
-          
           ],
         ),
       ),
