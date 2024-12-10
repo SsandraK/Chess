@@ -25,7 +25,7 @@ Widget build(BuildContext context) {
     body: Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly, // Space cards evenly
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly, 
         children: [
        MenuCard(
             icon: Icons.login_outlined,

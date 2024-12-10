@@ -41,3 +41,36 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Firebase related
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+lib/firebase_options.dart
+firebase.json
+
+# Auto-generated Plugin Files
+macos/Flutter/GeneratedPluginRegistrant.swift
+windows/flutter/generated_plugin_registrant.cc
+windows/flutter/generated_plugins.cmake
+
+# Generated Xcode Files
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/.symlinks/
+/ios/Pods/
+ios/Podfile.lock
+macos/Pods/
+macos/Podfile.lock
+
+# VSCode Workspace
+.vscode/
+
+# Files created by CocoaPods
+.cocoapods/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
