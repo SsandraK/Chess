@@ -1,5 +1,7 @@
 import 'package:chess/providers/game_provider.dart';
 import 'package:chess/screens/game_screen.dart';
+import 'package:chess/screens/login_screen.dart';
+import 'package:chess/widgets/menucard_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -11,67 +13,57 @@ class MenuScreen extends StatefulWidget {
 }
 
 class _MenuScreenState extends State<MenuScreen> {
-  @override
-  Widget build(BuildContext context) {
-    final gameProvider = context.read<GameProvider>();
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color.fromARGB(255, 224, 246, 157),
-        title: const Text('Menu'),
+@override
+Widget build(BuildContext context) {
+  final gameProvider = context.read<GameProvider>();
+  return Scaffold(
+    appBar: AppBar(
+      backgroundColor: const Color.fromARGB(255, 199, 227, 199),
+      title: const Text('Menu'),
+       centerTitle: true,
+    ),
+    body: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly, // Space cards evenly
+        children: [
+       MenuCard(
+            icon: Icons.login_outlined,
+            label: 'Log In',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+              );
+            },
+          ),
+        MenuCard(
+            icon: Icons.computer,
+            label: 'Play vs Computer',
+            onTap: () {
+              gameProvider.setVsComputer(value: true);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const GameScreen()),
+              );
+            },
+          ),
+          MenuCard(
+            icon: Icons.people,
+            label: 'Play with Friend',
+            onTap: () {
+              gameProvider.setVsComputer(value: false);
+              // Navigate to another screen
+              // Navigator.push(
+              //   context,
+              //   MaterialPageRoute(
+              //       builder: (context) => const FriendGameScreen()),
+              // );
+            },
+          ),
+        ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(25.0), 
-        child: GridView.count(
-          shrinkWrap: true,
-          crossAxisCount: 1, 
-          mainAxisSpacing: 16.0, 
-          crossAxisSpacing: 16.0, 
-          children: [
-            Card(
-              color: const Color.fromARGB(255, 241, 245, 241),
-              child: InkWell(
-                onTap: () {
-                  gameProvider.setVsComputer(value: true);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const GameScreen()),
-                  );
-                },
-                child: const Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.computer),
-                    SizedBox(height: 10),
-                    Text('Play vs Computer'),
-                  ],
-                ),
-              ),
-            ),
-            Card(
-              color: const Color.fromARGB(255, 241, 245, 241),
-              child: InkWell(
-                onTap: () {
-                 gameProvider.setVsComputer(value: false);
-                  // Navigate to another screen
-                  // Navigator.push(
-                  //   context,
-                  //   MaterialPageRoute(
-                  //       builder: (context) => const FriendGameScreen()),
-                  // );
-                },
-                child: const Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.people),
-                    SizedBox(height: 10),
-                    Text('Play with Friend'),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+    ),
+  );
+}
 }

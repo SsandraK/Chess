@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:bishop/bishop.dart' as bishop;
 import 'package:squares/squares.dart';
 import 'package:square_bishop/square_bishop.dart';
-import 'dart:math';
 
 class GameProvider extends ChangeNotifier {
   late bishop.Game _game = bishop.Game(variant: bishop.Variant.standard());

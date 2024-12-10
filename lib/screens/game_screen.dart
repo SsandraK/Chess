@@ -96,7 +96,7 @@ bool _handleGameOver(GameProvider gameProvider) {
           icon: const Icon(Icons.arrow_back),
         ),
         title: const Text('Chess'),
-        backgroundColor: const Color.fromARGB(255, 224, 246, 157),
+        backgroundColor: const Color.fromARGB(255, 199, 227, 199),
         actions: [
           IconButton(
             onPressed: gameProvider.flipTheBoard, // Flip the board
