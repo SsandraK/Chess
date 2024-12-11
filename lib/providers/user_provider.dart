@@ -4,32 +4,27 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 
-
-
 class UserProvider with ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Hash the password using SHA-256
+  // Hash the password 
   String hashPassword(String password) {
-    final bytes = utf8.encode(password); // Convert password to UTF-8 bytes
-    final hashedPassword = sha256.convert(bytes); // Hash using SHA-256
+    final bytes = utf8.encode(password); 
+    final hashedPassword = sha256.convert(bytes); 
     return hashedPassword.toString();
   }
 
   // Save user to Firestore
   Future<void> saveUser({required String username, required String password}) async {
     try {
-      // Hash the password
       final hashedPassword = hashPassword(password);
 
-      // Define user data to save
       Map<String, dynamic> userData = {
         "username": username,
         "password": hashedPassword,
         "createdAt": FieldValue.serverTimestamp(),
       };
 
-      // Save to Firestore using the username as the document ID
       await _firestore.collection('users').doc(username).set(userData);
       print('User saved successfully');
       notifyListeners();
@@ -39,12 +34,10 @@ class UserProvider with ChangeNotifier {
     }
   }
 
-  // Authenticate user manually by checking username and hashed password
+  // Authenticate user by checking username and password
   Future<bool> authenticateUser({required String username, required String password}) async {
     try {
       final hashedPassword = hashPassword(password);
-
-      // Fetch the user document
       final userDoc = await _firestore.collection('users').doc(username).get();
 
       if (userDoc.exists && userDoc.data()!['password'] == hashedPassword) {
@@ -59,4 +52,31 @@ class UserProvider with ChangeNotifier {
       throw e;
     }
   }
+
+  // Check if user already exists in the waiting room or active games
+  Future<bool> checkIfUserExists(String username) async {
+    try {
+      // Check if user exists in the waiting room
+      final waitingRoomDoc = await _firestore.collection('waitingRoom').doc(username).get();
+      if (waitingRoomDoc.exists) {
+        print('User is already in the waiting room.');
+        return true;
+      }
+
+      // Check if user exists in active games
+      final activeGames = await _firestore.collection('games')
+          .where('players', arrayContains: username)
+          .get();
+      if (activeGames.docs.isNotEmpty) {
+        print('User is already in an active game.');
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      print('Failed to check if user exists: $e');
+      throw e;
+    }
+  }
 }
+

@@ -1,5 +1,5 @@
 import 'package:chess/providers/user_provider.dart';
-import 'package:chess/screens/waiting_room.dart';
+import 'package:chess/screens/waiting_room_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -120,38 +120,36 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
                   const SizedBox(height: 20),
-ElevatedButton(
+                 ElevatedButton(
   onPressed: () async {
     if (_formKey.currentState!.validate()) {
-      try {
-        // Save user data via UserProvider
-        await Provider.of<UserProvider>(context, listen: false)
-            .saveUser(username: username, password: password);
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
 
-        // Navigate to the next screen
+      try {
+        // Check if username already exists
+        final userExists = await userProvider.checkIfUserExists(username);
+        if (userExists) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Username is already in use!')),
+          );
+          return; // Prevent the user from proceeding
+        }
+
+        // Save user data and proceed to the waiting room
+        await userProvider.saveUser(username: username, password: password);
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => const WaitingRoomScreen(),
-          ),
+          MaterialPageRoute(builder: (context) => WaitingRoomScreen(username: username,)),
         );
       } catch (e) {
-        // Handle errors gracefully
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save user: $e')),
+          SnackBar(content: Text('Failed to join the waiting room: $e')),
         );
       }
     }
   },
-  style: ElevatedButton.styleFrom(
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(10),
-    ),
-    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
-  ),
-  child: const Text('Log In'),
-)
-
+  child: const Text('submit'),
+),
 
                 ],
               ),
