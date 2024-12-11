@@ -1,5 +1,6 @@
 import 'package:chess/firebase_options.dart';
 import 'package:chess/providers/game_provider.dart';
+import 'package:chess/providers/user_provider.dart';
 import 'package:chess/screens/menu_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +16,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => GameProvider()),
+        ChangeNotifierProvider(create: (_) => UserProvider()),
       ],
       child: const MyApp(),
     ),

@@ -1,5 +1,7 @@
+import 'package:chess/providers/user_provider.dart';
 import 'package:chess/screens/waiting_room.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -118,28 +120,39 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
                   const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const WaitingRoomScreen(),
-                          ),
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 30,
-                        vertical: 12,
-                      ),
-                    ),
-                    child: const Text('Log In'),
-                  ),
+ElevatedButton(
+  onPressed: () async {
+    if (_formKey.currentState!.validate()) {
+      try {
+        // Save user data via UserProvider
+        await Provider.of<UserProvider>(context, listen: false)
+            .saveUser(username: username, password: password);
+
+        // Navigate to the next screen
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const WaitingRoomScreen(),
+          ),
+        );
+      } catch (e) {
+        // Handle errors gracefully
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save user: $e')),
+        );
+      }
+    }
+  },
+  style: ElevatedButton.styleFrom(
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(10),
+    ),
+    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+  ),
+  child: const Text('Log In'),
+)
+
+
                 ],
               ),
             ),
