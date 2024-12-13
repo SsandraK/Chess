@@ -27,16 +27,6 @@ Widget build(BuildContext context) {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly, 
         children: [
-       MenuCard(
-            icon: Icons.login_outlined,
-            label: 'Log In',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-              );
-            },
-          ),
         MenuCard(
             icon: Icons.computer,
             label: 'Play vs Computer',
@@ -53,12 +43,11 @@ Widget build(BuildContext context) {
             label: 'Play with Friend',
             onTap: () {
               gameProvider.setVsComputer(value: false);
-              // Navigate to another screen
-              // Navigator.push(
-              //   context,
-              //   MaterialPageRoute(
-              //       builder: (context) => const FriendGameScreen()),
-              // );
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const LoginScreen()),
+              );
             },
           ),
         ],

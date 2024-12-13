@@ -8,7 +8,7 @@ class GameProvider extends ChangeNotifier {
   late bishop.Game _game = bishop.Game(variant: bishop.Variant.standard());
   late SquaresState _state = _game.squaresState(Squares.white);
 
-  final bool _aiThinking = false;
+  bool _aiThinking = false;
   bool _flipBoard = false;
   bool _vsComputer = false;
   bool _isLoading = false;

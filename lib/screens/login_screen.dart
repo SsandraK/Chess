@@ -120,37 +120,45 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
                   const SizedBox(height: 20),
-                 ElevatedButton(
-  onPressed: () async {
-    if (_formKey.currentState!.validate()) {
-      final userProvider = Provider.of<UserProvider>(context, listen: false);
+                  ElevatedButton(
+                    onPressed: () async {
+                      if (_formKey.currentState!.validate()) {
+                        final userProvider =
+                            Provider.of<UserProvider>(context, listen: false);
 
-      try {
-        // Check if username already exists
-        final userExists = await userProvider.checkIfUserExists(username);
-        if (userExists) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Username is already in use!')),
-          );
-          return; // Prevent the user from proceeding
-        }
+                        try {
+                          // Check if username already exists
+                          final userExists =
+                              await userProvider.checkIfUserExists(username);
+                          if (userExists) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text('Username is already in use!')),
+                            );
+                            return; // Prevent the user from proceeding
+                          }
 
-        // Save user data and proceed to the waiting room
-        await userProvider.saveUser(username: username, password: password);
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => WaitingRoomScreen(username: username,)),
-        );
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to join the waiting room: $e')),
-        );
-      }
-    }
-  },
-  child: const Text('submit'),
-),
-
+                          // Save user data and proceed to the waiting room
+                          await userProvider.saveUser(
+                              username: username, password: password);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => WaitingRoomScreen(
+                                      username: username,
+                                    )),
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                                content: Text(
+                                    'Failed to join the waiting room: $e')),
+                          );
+                        }
+                      }
+                    },
+                    child: const Text('submit'),
+                  ),
                 ],
               ),
             ),
