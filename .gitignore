@@ -10,67 +10,76 @@
 .svn/
 migrate_working_dir/
 
-# IntelliJ related
+# IntelliJ / Android Studio Related
 *.iml
 *.ipr
 *.iws
 .idea/
 
+# VS Code Related
 # The .vscode folder contains launch configuration and tasks you configure in
 # VS Code which you may wish to be included in version control, so this line
 # is commented out by default.
 #.vscode/
 
-# Flutter/Dart/Pub related
+# Flutter/Dart/Pub Related
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
+.flutter-plugins-dependencies.lock
 .pub-cache/
 .pub/
 /build/
 
-# Symbolication related
+# Symbolication and Obfuscation Related
 app.*.symbols
-
-# Obfuscation related
 app.*.map.json
 
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
+# Android Build Artifacts
+/android/app/debug/
+/android/app/profile/
+/android/app/release/
+/android/.gradle/
+/android/app/build/
 
-# Firebase related
+# Firebase Related
 android/app/google-services.json
 ios/Runner/GoogleService-Info.plist
 lib/firebase_options.dart
 firebase.json
+.firebaserc
 
 # Auto-generated Plugin Files
 macos/Flutter/GeneratedPluginRegistrant.swift
 windows/flutter/generated_plugin_registrant.cc
 windows/flutter/generated_plugins.cmake
 
-# Generated Xcode Files
-ios/Flutter/App.framework
-ios/Flutter/Flutter.framework
-ios/Flutter/Flutter.podspec
+# CocoaPods Related
+ios/Pods/
 ios/.symlinks/
-/ios/Pods/
 ios/Podfile.lock
 macos/Pods/
 macos/Podfile.lock
-
-# VSCode Workspace
-.vscode/
-
-# Files created by CocoaPods
 .cocoapods/
 
-# Temporary files
+# Xcode Related
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+*.xcworkspace/
+*.xcuserstate
+*.xcuserdatad
+
+# Temporary and Backup Files
 *.tmp
 *.temp
 *.bak
 *.swp
+*.lock
+
+# User-Specific or Local Configuration Files
+*.local
+*.env
+*.env.*

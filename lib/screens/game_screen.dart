@@ -1,194 +1,183 @@
-
-import 'package:chess/providers/game_provider.dart';
-import 'package:chess/widgets/piecees_widget.dart';
+import 'package:chess_game/helpers/waitingroom.dart';
+import 'package:chess_game/providers/database_provider.dart';
+import 'package:chess_game/providers/user_provider.dart';
+import 'package:chess_game/providers/game_provider.dart';
+import 'package:chess_game/widgets/menucard_widget.dart';
+import 'package:chess_game/widgets/piecees_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:square_bishop/square_bishop.dart';
-import 'package:squares/squares.dart';
-import 'package:bishop/bishop.dart' as bishop;
-
-
+import 'package:squares/squares.dart' as squares;
 class GameScreen extends StatefulWidget {
-  const GameScreen({super.key});
+  final WaitingRoom roomId;
+
+  const GameScreen({
+    super.key,
+    required this.roomId,
+  });
 
   @override
   State<GameScreen> createState() => _GameScreenState();
 }
 
 class _GameScreenState extends State<GameScreen> {
-  bool _aiThinking = false;
+  late String myColor = 'white';
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final gameProvider = context.read<GameProvider>();
-     
-      gameProvider.resetGame();
+      final waitingRoom = widget.roomId;
+
+      if (!gameProvider.isInitialized) {
+        setState(() {
+          myColor = waitingRoom.owner.uuid == context.read<UserProvider>().user?.uuid
+              ? 'white'
+              : 'black';
+        });
+
+        print('Player color (myColor): $myColor');
+
+        gameProvider.setPlayerColor(myColor);
+        gameProvider.startMultiplayerGame(
+          waitingRoom.roomId,
+          waitingRoom,
+          context.read<DatabaseService>(),
+        );
+        gameProvider.initializeGame();
+      }
     });
   }
 
-  @override
-  void dispose() {
-    super.dispose();
+  Future<void> onMove(squares.Move move) async {
+    final gameProvider = context.read<GameProvider>();
+    try {
+      final fromAlgebraic = gameProvider.toAlgebraic(move.from);
+      final toAlgebraic = gameProvider.toAlgebraic(move.to);
+      final moveString = '$fromAlgebraic$toAlgebraic';
+
+      if (fromAlgebraic.isEmpty || toAlgebraic.isEmpty) {
+        throw Exception('Invalid move coordinates.');
+      }
+
+      print('Attempting move: $moveString');
+      print('Game state before move: ${gameProvider.state.board}');
+
+      await gameProvider.handleMove(moveString);
+      await checkAndHandleGameOver(gameProvider);
+    } catch (e) {
+      print('Error handling move: $e');
+    }
   }
 
-  // Handle a move
-void _onMove(Move move) async {
-  final gameProvider = context.read<GameProvider>();
-
-  // Attempt to make the player's move
-  if (gameProvider.game.makeSquaresMove(move)) {
-    gameProvider.updateState(gameProvider.game.squaresState(Squares.white));
-    if (_handleGameOver(gameProvider)) return;
+  Future<void> checkAndHandleGameOver(GameProvider gameProvider) async {
+    if (await gameProvider.handleGameOver()) {
+      showGameOverDialog(gameProvider);
+    }
   }
 
-  // Handle the AI's turn if playing vs Computer
-  if (gameProvider.vsComputer &&
-      gameProvider.state.state == PlayState.theirTurn &&
-      !_aiThinking) {
-    await _handleAITurn(gameProvider);
-  }
+  void showGameOverDialog(GameProvider gameProvider) {
+    final isCheckmate = gameProvider.game?.isCheckmate ?? false;
+    final isDraw = gameProvider.game?.isDraw ?? false;
 
-  _handleGameOver(gameProvider);
-}
+    final message = isCheckmate
+        ? '${gameProvider.game?.currentMove == 'white' ? 'Black' : 'White'} Wins by Checkmate!'
+        : (isDraw ? 'It\'s a Draw!' : 'Game Over!');
 
-Future<void> _handleAITurn(GameProvider gameProvider) async {
-  setState(() => _aiThinking = true);
-
-  await Future.delayed(const Duration(milliseconds: 1500));
-  gameProvider.game.makeRandomMove();
-  setState(() => _aiThinking = false);
-
-  // Update the board state after the AI's move
-  gameProvider.updateState(gameProvider.game.squaresState(Squares.white));
-}
-
-bool _handleGameOver(GameProvider gameProvider) {
-  if (gameProvider.game.gameOver) {
-    // ignore: unrelated_type_equality_checks
-    final whiteWon = gameProvider.game.turn == 'black'; 
-
-    gameProvider.gameOver(
+    showDialog(
       context: context,
-      whiteWon: whiteWon,
-      newGame: gameProvider.resetGame,
-    );
-
-    return true; 
-  }
-
-  return false; 
-}
-
-
-
-  @override
-  Widget build(BuildContext context) {
-    final gameProvider = Provider.of<GameProvider>(context);
-
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          icon: const Icon(Icons.arrow_back),
-        ),
-        title: const Text('Chess'),
-        backgroundColor: const Color.fromARGB(255, 199, 227, 199),
+      builder: (context) => AlertDialog(
+        title: const Text('Game Over'),
+        content: Text(message),
         actions: [
-          IconButton(
-            onPressed: gameProvider.flipTheBoard, // Flip the board
-            icon: const Icon(Icons.rotate_left),
-          ),
-          OutlinedButton(
-            onPressed: () => gameProvider.resetGame(), // Reset the game
-            child: const Text('New Game'),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pop(context); 
+            },
+            child: const Text('Exit'),
           ),
         ],
       ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween, 
-        children: [
-          // Opponent's info
-          const ListTile(
-            leading: CircleAvatar(
-              radius: 20,
-              backgroundImage: AssetImage('assets/images/user.png'),
-            ),
-            title: Text('Player 2'),
-          ),
+    );
+  }
 
-          // Chessboard
-          Padding(
-            padding: const EdgeInsets.all(4.0),
-            child: BoardController(
-              state: gameProvider.flipBoard
-                  ? gameProvider.state.board.flipped()
-                  : gameProvider.state.board,
+@override
+Widget build(BuildContext context) {
+  final gameProvider = context.watch<GameProvider>();
+  final whitePlayer = widget.roomId.owner;
+  final blackPlayer = widget.roomId.guest;
+  final isBlackAtBottom = myColor == 'white';
+
+  return Scaffold(
+    appBar: AppBar(
+      leading: IconButton(
+        onPressed: () {
+          Navigator.pop(context);
+        },
+        icon: const Icon(Icons.arrow_back),
+      ),
+      title: const Text('Chess Game'),
+      backgroundColor: const Color.fromARGB(255, 105, 203, 252),
+    ),
+    body: BackgroundWidget(
+      child: Column(
+        children: [
+          if (!isBlackAtBottom)
+            PlayerInfo(
+              username: blackPlayer?.username ?? 'Waiting for Player...',
+              avatarPath: 'assets/images/user.png',
+              role: 'Black',
+            )
+          else
+            PlayerInfo(
+              username: whitePlayer.username,
+              avatarPath: 'assets/images/user01.png',
+              role:'White',
+            ),
+
+          // Chessboard.
+          Expanded(
+            child: squares.BoardController(
+              state: gameProvider.state.board,
               playState: gameProvider.state.state,
-              theme: BoardTheme.brown,
+              theme: squares.BoardTheme.brown,
               moves: gameProvider.state.moves,
-              onMove: _onMove, 
-              onPremove: _onMove, 
-              onSetPremove: (move) {
-                if (move != null) _onMove(move);
-              },
-              markerTheme: MarkerTheme(
-                empty: MarkerTheme.dot,
-                piece: MarkerTheme.corners(),
+              onMove: onMove,
+              markerTheme: squares.MarkerTheme(
+                empty: squares.MarkerTheme.dot,
+                piece: squares.MarkerTheme.corners(),
               ),
-              promotionBehaviour: PromotionBehaviour.autoPremove,
+              promotionBehaviour: squares.PromotionBehaviour.autoPremove,
               pieceSet: getChessPieceSet(),
             ),
           ),
 
-          // Player's info
-          const ListTile(
-            leading: CircleAvatar(
-              radius: 20,
-              backgroundImage: AssetImage('assets/images/user01.png'),
+          if (isBlackAtBottom)
+            PlayerInfo(
+              username: blackPlayer?.username ?? 'Waiting for Player...',
+              avatarPath: 'assets/images/user.png',
+               role: 'Black',
+            )
+          else
+            PlayerInfo(
+              username: whitePlayer.username,
+              avatarPath: 'assets/images/user01.png',
+               role: 'White',
             ),
-            title: Text('Player 1'),
-          ),
 
-          // Score at the bottom
+          // Current turn display.
           Container(
-            padding: const EdgeInsets.symmetric(vertical: 16.0),
-            color: Colors.grey[200],
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                Column(
-                  children: [
-                    const Text(
-                      'White',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      '${gameProvider.whiteScore}',
-                      style: const TextStyle(fontSize: 24),
-                    ),
-                  ],
-                ),
-                Column(
-                  children: [
-                    const Text(
-                      'Black',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      '${gameProvider.blackScore}',
-                      style: const TextStyle(fontSize: 24),
-                    ),
-                  ],
-                ),
-              ],
+            color: const Color.fromARGB(255, 204, 232, 250),
+            padding: const EdgeInsets.symmetric(vertical: 8.0,  horizontal: 10.0,),
+            child: Text(
+              'Current Turn: ${gameProvider.game?.currentMove == 'white' ? 'White' : 'Black'}',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

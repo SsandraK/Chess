@@ -15,7 +15,7 @@ class MenuCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: const Color.fromARGB(255, 241, 245, 241),
+      color: const Color.fromARGB(255, 219, 237, 246),
       elevation: 4,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(15),
@@ -43,6 +43,31 @@ class MenuCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+
+
+
+class BackgroundWidget extends StatelessWidget {
+  final Widget child;
+  const BackgroundWidget({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Container(
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/images/bg.png'), 
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+        child,
+      ],
     );
   }
 }

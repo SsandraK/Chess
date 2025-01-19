@@ -1,10 +1,14 @@
-import 'dart:async';
 
-import 'package:chess/providers/user_provider.dart';
-import 'package:chess/providers/waitingroom_provider.dart';
-import 'package:chess/screens/menu_screen.dart';
+import 'package:chess_game/helpers/game.dart';
+import 'package:chess_game/helpers/waitingroom.dart';
+import 'package:chess_game/providers/database_provider.dart';
+import 'package:chess_game/providers/user_provider.dart';
+import 'package:chess_game/providers/waitingroom_provider.dart';
+import 'package:chess_game/screens/game_screen.dart';
+import 'package:chess_game/widgets/menucard_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:bishop/bishop.dart' as bishop;
 
 class WaitingRoomScreen extends StatefulWidget {
   final String username;
@@ -12,155 +16,192 @@ class WaitingRoomScreen extends StatefulWidget {
   const WaitingRoomScreen({super.key, required this.username});
 
   @override
-  _WaitingRoomScreenState createState() => _WaitingRoomScreenState();
+  State<WaitingRoomScreen> createState() => _WaitingRoomScreenState();
 }
 
-class _WaitingRoomScreenState extends State<WaitingRoomScreen>
-    with WidgetsBindingObserver {
-  StreamSubscription? _invitationSubscription;
+class _WaitingRoomScreenState extends State<WaitingRoomScreen> {
+  final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
+    Future.delayed(Duration.zero, _initializeRoom);
+  }
 
-    // Join the waiting room and start fetching users
-    final waitingRoomProvider =
-        Provider.of<WaitingRoomProvider>(context, listen: false);
-    waitingRoomProvider.joinWaitingRoom(widget.username);
-    waitingRoomProvider.fetchWaitingUsers();
-
-    // Start listening to game invitations
+  Future<void> _initializeRoom() async {
+    final waitingRoomProvider = Provider.of<WaitingRoomProvider>(context, listen: false);
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    _invitationSubscription =
-        userProvider.listenToGameInvitations(context, widget.username);
-  }
 
-  @override
-  void dispose() {
-    // Leave the waiting room when the screen is closed
-    final waitingRoomProvider =
-        Provider.of<WaitingRoomProvider>(context, listen: false);
-    waitingRoomProvider.leaveWaitingRoom(widget.username);
-
-    // Cancel the invitation subscription
-    _invitationSubscription?.cancel();
-
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    final waitingRoomProvider =
-        Provider.of<WaitingRoomProvider>(context, listen: false);
-    if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.detached) {
-      waitingRoomProvider.leaveWaitingRoom(widget.username);
+    if (userProvider.user != null) {
+      final owner = userProvider.user!.copyWith(isWhite: true);
+      final newRoom = WaitingRoom(
+        owner: owner,
+        guest: null,
+        roomId: 'room-id',
+      );
+      await waitingRoomProvider.createRoom(newRoom);
     }
+  }
+
+  void _showSnackBar(String message) {
+    scaffoldMessengerKey.currentState?.showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final waitingRoomProvider = Provider.of<WaitingRoomProvider>(context);
+    final userProvider = Provider.of<UserProvider>(context);
+    final currentRoom = waitingRoomProvider.currentRoom;
 
     return Scaffold(
+      key: scaffoldMessengerKey,
       appBar: AppBar(
         title: const Text('Waiting Room'),
-        backgroundColor: const Color.fromARGB(255, 199, 227, 199),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.home),
-            tooltip: 'Go to Menu',
-            onPressed: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const MenuScreen()),
+        backgroundColor:  const Color.fromARGB(255, 141, 211, 245),
+        centerTitle: true,
+      ),
+      body: BackgroundWidget(
+    child:  Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Builder(
+            builder: (context) {
+              if (waitingRoomProvider.isLoading) {
+                return const CircularProgressIndicator();
+              }
+              if (currentRoom == null) {
+                return const Center(
+                  child: Text(
+                    'No room available.',
+                    style: TextStyle(fontSize: 18),
+                  ),
+                );
+              }
+              final isHost = currentRoom.owner.uuid == userProvider.user?.uuid;
+
+              return Card(
+                elevation: 8.0,
+                color:  const Color.fromARGB(255, 219, 237, 246),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Room Details',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      ListTile(
+                        leading: CircleAvatar(
+                          backgroundImage: AssetImage('assets/images/user.png'),
+                        ),
+                        title: Text(
+                          'Hei! ${currentRoom.owner.username}',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      ListTile(
+                        leading: CircleAvatar(
+                          backgroundImage: AssetImage('assets/images/user01.png'),
+                        ),
+                        title: Text(
+                          currentRoom.guest == null
+                              ? 'Waiting for other player...'
+                              : 'Player: ${currentRoom.guest!.username}',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      if (!isHost && currentRoom.guest == null)
+                        ElevatedButton.icon(
+                          onPressed: () async {
+                            try {
+                              await waitingRoomProvider.joinRoom(
+                                currentRoom.roomId,
+                                userProvider.user!,
+                              );
+                            } catch (e) {
+                              _showSnackBar('Error joining room: $e');
+                            }
+                          },
+                          icon: const Icon(Icons.person_add),
+                          label: const Text('Find player'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color.fromARGB(255, 105, 203, 252),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24.0,
+                              vertical: 12.0,
+                            ),
+                          ),
+                        ),
+                      if (currentRoom.guest != null && isHost)
+                        ElevatedButton.icon(
+                          onPressed: () async {
+                            try {
+                              final dbService = Provider.of<DatabaseService>(context, listen: false);
+                              final updatedRoom = await dbService.fetchWaitingRoom(currentRoom.roomId);
+
+                              if (updatedRoom == null || updatedRoom.guest == null) {
+                                _showSnackBar(
+                                  'Room is not ready to start. Please wait for a guest to join.',
+                                );
+                                return;
+                              }
+
+                              final gameId = updatedRoom.roomId;
+                              final newGame = GameModel(
+                                players: {
+                                  'white': updatedRoom.owner,
+                                  'black': updatedRoom.guest!,
+                                },
+                                status: 'in-game',
+                                currentMove: '',
+                                fen: bishop.Game(variant: bishop.Variant.standard()).fen,
+                                gameId: gameId,
+                              );
+                              await dbService.saveGame(gameId, newGame);
+
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => GameScreen(
+                                    roomId: updatedRoom,
+                                  ),
+                                ),
+                              );
+                            } catch (e) {
+                              _showSnackBar('Error starting game: $e');
+                            }
+                          },
+                          icon: const Icon(Icons.play_arrow),
+                          label: const Text('Start Game'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color.fromARGB(255, 129, 172, 219),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24.0,
+                              vertical: 12.0,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
               );
             },
           ),
-        ],
+        ),
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color.fromARGB(255, 217, 230, 217),
-              Color.fromARGB(255, 255, 255, 255),
-            ],
-          ),
-        ),
-        child: Column(
-          children: [
-            const SizedBox(height: 10),
-            Text(
-              'Active Users:',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 10),
-            Expanded(
-              child: waitingRoomProvider.waitingUsers.isEmpty
-                  ? const Center(child: Text('No active users.'))
-                  : ListView.builder(
-                      itemCount: waitingRoomProvider.waitingUsers.length,
-                      itemBuilder: (context, index) {
-                        final user = waitingRoomProvider.waitingUsers[index];
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 4.0, horizontal: 8.0),
-                          child: Container(
-                            padding: const EdgeInsets.all(12.0),
-                            decoration: BoxDecoration(
-                              color: const Color.fromARGB(255, 248, 250, 249),
-                              borderRadius: BorderRadius.circular(8.0),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.5),
-                                  spreadRadius: 2,
-                                  blurRadius: 5,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  user['username'],
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16.0,
-                                  ),
-                                ),
-                                // Invite Button (hidden for the current user)
-                                user['username'] == widget.username
-                                    ? const SizedBox
-                                        .shrink() 
-                                    : IconButton(
-                                        icon: const Icon(Icons.person_add),
-                                        onPressed: () {
-                                          final waitingRoomProvider =
-                                              Provider.of<WaitingRoomProvider>(
-                                                  context,
-                                                  listen: false);
-                                          waitingRoomProvider
-                                              .sendGameNotification(
-                                                  context,
-                                                  widget.username,
-                                                  user['username']);
-                                        },
-                                      ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-            ),
-          ],
-        ),
       ),
     );
   }

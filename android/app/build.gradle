@@ -1,48 +1,35 @@
 plugins {
     id "com.android.application"
-    // START: FlutterFire Configuration
-    id 'com.google.gms.google-services'
-    // END: FlutterFire Configuration
     id "kotlin-android"
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id "dev.flutter.flutter-gradle-plugin"
+    id 'com.google.gms.google-services' // FlutterFire Configuration
 }
 
 android {
     namespace = "com.example.chess"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-tasks.withType(JavaCompile) {
-    options.compilerArgs += "-Xlint:-options"
-}
-
-    kotlinOptions {
-           jvmTarget = "17" 
-    }
- ndkVersion "25.1.8937393"
+    ndkVersion = "25.1.8937393" 
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.chess"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-         minSdkVersion 24  
+        applicationId "com.example.chess"
+        minSdkVersion 24
         targetSdkVersion 34
         versionCode 1
         versionName "1.0"
     }
 
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.debug
+            signingConfig signingConfigs.debug 
         }
     }
 }
@@ -50,3 +37,6 @@ tasks.withType(JavaCompile) {
 flutter {
     source = "../.."
 }
+
+// Apply the Google Services plugin for Firebase
+apply plugin: 'com.google.gms.google-services'

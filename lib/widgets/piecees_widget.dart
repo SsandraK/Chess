@@ -19,3 +19,30 @@ PieceSet getChessPieceSet() {
     },
   );
 }
+
+
+
+class PlayerInfo extends StatelessWidget {
+  final String username;
+  final String avatarPath;
+  final String role;
+
+  const PlayerInfo({
+    super.key,
+    required this.username,
+    required this.avatarPath,
+    required this.role,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: CircleAvatar(
+        radius: 20,
+        backgroundImage: AssetImage(avatarPath),
+      ),
+      title: Text(username),
+      subtitle: Text('Role: $role'),
+    );
+  }
+}

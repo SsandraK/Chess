@@ -1,30 +1,36 @@
-import 'package:chess/firebase_options.dart';
-import 'package:chess/providers/game_provider.dart';
-import 'package:chess/providers/user_provider.dart';
-import 'package:chess/providers/waitingroom_provider.dart';
-import 'package:chess/screens/menu_screen.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:chess_game/helpers/commands.dart';
+import 'package:chess_game/providers/database_provider.dart';
+import 'package:chess_game/providers/game_provider.dart';
+import 'package:chess_game/providers/user_provider.dart';
+import 'package:chess_game/providers/waitingroom_provider.dart';
+import 'package:chess_game/screens/menu_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-);
-  runApp(
+  final firebaseService = FirebaseService();
+  await firebaseService.initializeFirebase();
 
+  runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => GameProvider()),
+        ChangeNotifierProvider(create: (_) => DatabaseService()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
-        ChangeNotifierProvider(create: (_) => WaitingRoomProvider()),
+        ChangeNotifierProvider(
+          create: (context) => WaitingRoomProvider(
+            context.read<DatabaseService>(),
+            context.read<UserProvider>(),
+          ),
+        ),
+        ChangeNotifierProvider(create: (_) => GameProvider()),
       ],
       child: const MyApp(),
     ),
   );
 }
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -32,15 +38,17 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Flutter Chess App',
       debugShowCheckedModeBanner: false,
+      navigatorKey: navigatorKey,
       theme: ThemeData(
-  
-        colorScheme:const ColorScheme.highContrastLight(),
+        colorScheme: const ColorScheme.highContrastLight(),
         useMaterial3: true,
       ),
-      home:const MenuScreen(),
+      home: const MenuScreen(), 
+      builder: (context, widget) {
+        return widget ?? const Scaffold(body: Center(child: Text('An error occurred.')));
+      },
     );
   }
 }
-
