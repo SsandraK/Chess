@@ -48,7 +48,7 @@ class GameModel extends Equatable {
       return GameModel(
         players: players,
         status: data['status'] as String? ?? 'unknown',
-        currentMove: data['current_move'] as String? ?? '',
+        currentMove: data['current_move'] as String? ?? 'white',
         fen: data['fen'] as String? ?? '',
         gameId: data['game_id'] as String? ?? '',
         isCheckmate: data['is_checkmate'] as bool? ?? false,

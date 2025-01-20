@@ -101,27 +101,32 @@ class _WaitingRoomScreenState extends State<WaitingRoomScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      ListTile(
-                        leading: CircleAvatar(
-                          backgroundImage: AssetImage('assets/images/user.png'),
-                        ),
-                        title: Text(
-                          'Hei! ${currentRoom.owner.username}',
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      ListTile(
-                        leading: CircleAvatar(
-                          backgroundImage: AssetImage('assets/images/user01.png'),
-                        ),
-                        title: Text(
-                          currentRoom.guest == null
-                              ? 'Waiting for other player...'
-                              : 'Player: ${currentRoom.guest!.username}',
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                      ),
+                    ListTile(
+  leading: CircleAvatar(
+    backgroundImage: AssetImage('assets/images/user.png'),
+  ),
+  title: Text(
+    currentRoom.owner.uuid == userProvider.user?.uuid
+        ? 'Hei! ${currentRoom.owner.username}' 
+        : 'Player: ${currentRoom.owner.username}', 
+    style: const TextStyle(fontSize: 16),
+  ),
+),
+const SizedBox(height: 8),
+ListTile(
+  leading: CircleAvatar(
+    backgroundImage: AssetImage('assets/images/user01.png'),
+  ),
+  title: Text(
+    currentRoom.guest == null
+        ? 'Waiting for other player...' 
+        : (currentRoom.guest!.uuid == userProvider.user?.uuid
+            ? 'Hei! ${currentRoom.guest!.username}'
+          : 'Player: ${currentRoom.guest!.username}'), 
+    style: const TextStyle(fontSize: 16),
+  ),
+),
+
                       const SizedBox(height: 16),
                       if (!isHost && currentRoom.guest == null)
                         ElevatedButton.icon(
@@ -136,7 +141,7 @@ class _WaitingRoomScreenState extends State<WaitingRoomScreen> {
                             }
                           },
                           icon: const Icon(Icons.person_add),
-                          label: const Text('Find player'),
+                          label: const Text('Start game'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color.fromARGB(255, 105, 203, 252),
                             padding: const EdgeInsets.symmetric(
@@ -166,7 +171,7 @@ class _WaitingRoomScreenState extends State<WaitingRoomScreen> {
                                   'black': updatedRoom.guest!,
                                 },
                                 status: 'in-game',
-                                currentMove: '',
+                                currentMove: 'white',
                                 fen: bishop.Game(variant: bishop.Variant.standard()).fen,
                                 gameId: gameId,
                               );

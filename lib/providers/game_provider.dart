@@ -176,31 +176,33 @@ class GameProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> handleGameOver() async {
-    if (_game == null) return false;
+Future<bool> handleGameOver() async {
+  if (_game == null) return false;
 
-    final isCheckmate = _game?.isCheckmate ?? false;
-    final isDraw = _game?.isDraw ?? false;
+  final isCheckmate = _game?.isCheckmate ?? false;
+  final isDraw = _game?.isDraw ?? false;
 
-    if (isCheckmate || isDraw) {
-      final winner = isCheckmate
-          ? (_game!.currentMove == 'black' ? 'white' : 'black')
-          : null;
+  if (isCheckmate || isDraw) {
+    final winner = isCheckmate
+        ? (_game!.currentMove == 'black' ? 'white' : 'black')
+        : null;
 
-      _game = _game?.copyWith(
-        status: 'game-over',
-        winner: winner != null ? _game?.players[winner] : null,
-      );
+    _game = _game?.copyWith(
+      status: 'game-over',
+      currentMove: 'none', 
+      winner: winner != null ? _game?.players[winner] : null,
+    );
 
-      if (_isMultiplayer && _gameId != null) {
-        await DatabaseService().updateGame(_gameId!, _game!);
-      }
-
-      notifyListeners();
-      return true;
+    if (_isMultiplayer && _gameId != null) {
+      await DatabaseService().updateGame(_gameId!, _game!);
     }
-    return false;
+
+    notifyListeners();
+    return true;
   }
+  return false;
+}
+
 
   void notifyInvalidMove() {
     print('Invalid move attempted.');

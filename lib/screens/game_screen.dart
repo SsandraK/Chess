@@ -1,7 +1,11 @@
+import 'dart:async';
+
+import 'package:chess_game/helpers/game.dart';
 import 'package:chess_game/helpers/waitingroom.dart';
 import 'package:chess_game/providers/database_provider.dart';
 import 'package:chess_game/providers/user_provider.dart';
 import 'package:chess_game/providers/game_provider.dart';
+import 'package:chess_game/screens/menu_screen.dart';
 import 'package:chess_game/widgets/menucard_widget.dart';
 import 'package:chess_game/widgets/piecees_widget.dart';
 import 'package:flutter/material.dart';
@@ -21,6 +25,8 @@ class GameScreen extends StatefulWidget {
 
 class _GameScreenState extends State<GameScreen> {
   late String myColor = 'white';
+  StreamSubscription? gameSubscription;
+  bool isDialogShown = false; 
 
   @override
   void initState() {
@@ -36,8 +42,6 @@ class _GameScreenState extends State<GameScreen> {
               : 'black';
         });
 
-        print('Player color (myColor): $myColor');
-
         gameProvider.setPlayerColor(myColor);
         gameProvider.startMultiplayerGame(
           waitingRoom.roomId,
@@ -46,7 +50,24 @@ class _GameScreenState extends State<GameScreen> {
         );
         gameProvider.initializeGame();
       }
+
+      // Subscribe to game updates
+      final gameId = waitingRoom.roomId;
+      gameSubscription = DatabaseService().listenToGame(gameId, (updatedGame) {
+        if (updatedGame.status == 'game-over' && !isDialogShown) {
+          setState(() {
+            isDialogShown = true; 
+          });
+          showGameOverDialog(updatedGame);
+        }
+      });
     });
+  }
+
+  @override
+  void dispose() {
+    gameSubscription?.cancel(); 
+    super.dispose();
   }
 
   Future<void> onMove(squares.Move move) async {
@@ -60,29 +81,46 @@ class _GameScreenState extends State<GameScreen> {
         throw Exception('Invalid move coordinates.');
       }
 
-      print('Attempting move: $moveString');
-      print('Game state before move: ${gameProvider.state.board}');
-
       await gameProvider.handleMove(moveString);
       await checkAndHandleGameOver(gameProvider);
     } catch (e) {
-      print('Error handling move: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error handling move: $e')),
+      );
     }
   }
 
   Future<void> checkAndHandleGameOver(GameProvider gameProvider) async {
     if (await gameProvider.handleGameOver()) {
-      showGameOverDialog(gameProvider);
+      final updatedGame = gameProvider.game; 
+      if (updatedGame != null && !isDialogShown) {
+        setState(() {
+          isDialogShown = true; 
+        });
+        showGameOverDialog(updatedGame);
+      }
     }
   }
 
-  void showGameOverDialog(GameProvider gameProvider) {
-    final isCheckmate = gameProvider.game?.isCheckmate ?? false;
-    final isDraw = gameProvider.game?.isDraw ?? false;
+  void showGameOverDialog(GameModel updatedGame) {
+    final isCheckmate = updatedGame.isCheckmate;
+    final isDraw = updatedGame.isDraw;
+    final winner = updatedGame.winner;
+    final currentUser = context.read<UserProvider>().user;
 
-    final message = isCheckmate
-        ? '${gameProvider.game?.currentMove == 'white' ? 'Black' : 'White'} Wins by Checkmate!'
-        : (isDraw ? 'It\'s a Draw!' : 'Game Over!');
+    String message;
+
+    if (isCheckmate) {
+      if (winner != null && winner.uuid == currentUser?.uuid) {
+        message = 'Congratulations, ${currentUser?.username}! You won by Checkmate!';
+      } else {
+        message = 'Sorry, ${currentUser?.username}. You lose.';
+      }
+    } else if (isDraw) {
+      message = 'It\'s a Draw!';
+    } else {
+      message = 'Game Over!';
+    }
 
     showDialog(
       context: context,
@@ -92,8 +130,10 @@ class _GameScreenState extends State<GameScreen> {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context); 
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => MenuScreen()),
+                (route) => false,
+              );
             },
             child: const Text('Exit'),
           ),
@@ -102,82 +142,77 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
-@override
-Widget build(BuildContext context) {
-  final gameProvider = context.watch<GameProvider>();
-  final whitePlayer = widget.roomId.owner;
-  final blackPlayer = widget.roomId.guest;
-  final isBlackAtBottom = myColor == 'white';
+  @override
+  Widget build(BuildContext context) {
+    final gameProvider = context.watch<GameProvider>();
+    final whitePlayer = widget.roomId.owner;
+    final blackPlayer = widget.roomId.guest;
 
-  return Scaffold(
-    appBar: AppBar(
-      leading: IconButton(
-        onPressed: () {
-          Navigator.pop(context);
-        },
-        icon: const Icon(Icons.arrow_back),
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          icon: const Icon(Icons.arrow_back),
+        ),
+        title: const Text('Chess Game'),
+        backgroundColor: const Color.fromARGB(255, 105, 203, 252),
       ),
-      title: const Text('Chess Game'),
-      backgroundColor: const Color.fromARGB(255, 105, 203, 252),
-    ),
-    body: BackgroundWidget(
-      child: Column(
-        children: [
-          if (!isBlackAtBottom)
+      body: BackgroundWidget(
+        child: Column(
+          children: [
+            // Top Player Info
             PlayerInfo(
-              username: blackPlayer?.username ?? 'Waiting for Player...',
-              avatarPath: 'assets/images/user.png',
-              role: 'Black',
-            )
-          else
-            PlayerInfo(
-              username: whitePlayer.username,
-              avatarPath: 'assets/images/user01.png',
-              role:'White',
+              username: myColor == 'white'
+                  ? (blackPlayer?.username ?? 'Waiting for Player...')
+                  : whitePlayer.username,
+              avatarPath: myColor == 'white'
+                  ? 'assets/images/user01.png'
+                  : 'assets/images/user.png',
+              role: myColor == 'white' ? 'Black' : 'White',
             ),
 
-          // Chessboard.
-          Expanded(
-            child: squares.BoardController(
-              state: gameProvider.state.board,
-              playState: gameProvider.state.state,
-              theme: squares.BoardTheme.brown,
-              moves: gameProvider.state.moves,
-              onMove: onMove,
-              markerTheme: squares.MarkerTheme(
-                empty: squares.MarkerTheme.dot,
-                piece: squares.MarkerTheme.corners(),
+            // Chessboard
+            Expanded(
+              child: squares.BoardController(
+                state: gameProvider.state.board,
+                playState: gameProvider.state.state,
+                theme: squares.BoardTheme.brown,
+                moves: gameProvider.state.moves,
+                onMove: onMove,
+                markerTheme: squares.MarkerTheme(
+                  empty: squares.MarkerTheme.dot,
+                  piece: squares.MarkerTheme.corners(),
+                ),
+                promotionBehaviour: squares.PromotionBehaviour.autoPremove,
+                pieceSet: getChessPieceSet(),
               ),
-              promotionBehaviour: squares.PromotionBehaviour.autoPremove,
-              pieceSet: getChessPieceSet(),
-            ),
-          ),
-
-          if (isBlackAtBottom)
-            PlayerInfo(
-              username: blackPlayer?.username ?? 'Waiting for Player...',
-              avatarPath: 'assets/images/user.png',
-               role: 'Black',
-            )
-          else
-            PlayerInfo(
-              username: whitePlayer.username,
-              avatarPath: 'assets/images/user01.png',
-               role: 'White',
             ),
 
-          // Current turn display.
-          Container(
-            color: const Color.fromARGB(255, 204, 232, 250),
-            padding: const EdgeInsets.symmetric(vertical: 8.0,  horizontal: 10.0,),
-            child: Text(
-              'Current Turn: ${gameProvider.game?.currentMove == 'white' ? 'White' : 'Black'}',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            // Bottom Player Info
+            PlayerInfo(
+              username: myColor == 'white'
+                  ? whitePlayer.username
+                  : (blackPlayer?.username ?? 'Waiting for Player...'),
+              avatarPath: myColor == 'white'
+                  ? 'assets/images/user.png'
+                  : 'assets/images/user01.png',
+              role: myColor == 'white' ? 'White' : 'Black',
             ),
-          ),
-        ],
+
+            // Current Turn
+            Container(
+              color: const Color.fromARGB(255, 204, 232, 250),
+              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 10.0),
+              child: Text(
+                'Current Turn: ${gameProvider.game?.currentMove == 'white' ? 'White' : 'Black'}',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 }
