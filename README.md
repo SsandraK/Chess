@@ -4,11 +4,11 @@ This application is a real-time chess game built with Flutter. It leverages Fire
 
 ## :bookmark_tabs: Table of Contents
 
-1. Installation
-2. Implementation
-3. Folder Structure
-4. For Auditors
-5. Rules of Chess
+1. [Installation]
+2. [Implementation]
+3.[Folder Sructure]
+4. [For Auditors]
+5. [Rules of Chess]
 
 ### :inbox_tray: Installation
 
@@ -44,7 +44,7 @@ This app includes the following key features:
 * Game Over Scenarios: Handle checkmate, stalemate, and draw conditions.
 
 ### :file_folder: Folder Structure
-
+```
 real_time_chess/
 ├── firebase_options.dart       # Firebase configuration settings
 ├── helpers/                    # Utility functions and helper classes
@@ -66,7 +66,8 @@ real_time_chess/
 ├── widgets/                    # Reusable UI components
 │   ├── menucard_widget.dart
 │   ├── pieces_widget.dart
-└── pubspec.yaml                # Project dependencies and metadata
+└── pubspec.yaml                # Project dependencies and metadata 
+```
 
 ### :mag: For Auditors
 
@@ -122,4 +123,5 @@ Yes, the app notifies the winner or a draw.
 If you need a refresher on chess rules, you can visit:
 Learn How to Play Chess- `(https://www.chess.com/learn-how-to-play-chess)`
 
-### :point_right: real-time chess 
+### :point_down: real-time chess 
+`(https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExcnIzOHRhNXB2ejRzanN1dzMwcTJ1cTIxZmVjMGluMzRsZXRpeXF5biZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/eg8EPt472uqFbNyAdB/giphy.gif) `
