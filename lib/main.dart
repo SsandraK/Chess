@@ -5,12 +5,14 @@ import 'package:chess_game/providers/user_provider.dart';
 import 'package:chess_game/providers/waitingroom_provider.dart';
 import 'package:chess_game/screens/menu_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final firebaseService = FirebaseService();
   await firebaseService.initializeFirebase();
+   await dotenv.load(fileName: ".env");
 
   runApp(
     MultiProvider(

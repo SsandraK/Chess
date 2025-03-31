@@ -4,11 +4,12 @@ This application is a real-time chess game built with Flutter. It leverages Fire
 
 ## :bookmark_tabs: Table of Contents
 
-1. [Installation]
-2. [Implementation]
-3.[Folder Sructure]
-4. [For Auditors]
-5. [Rules of Chess]
+1. [Installation](#inbox_tray-installation)
+2. [Implementation](#hammer-implementation)
+3. [Folder Structure](#file_folder-folder-structure)
+4. [Features](#mag-for-auditors)
+5. [Rules](#book-rules-of-chess)
+
 
 ### :inbox_tray: Installation
 
@@ -69,51 +70,27 @@ real_time_chess/
 └── pubspec.yaml                # Project dependencies and metadata 
 ```
 
-### :mag: For Auditors
+### ✨ Features
 
-If you do not wish to install Flutter, Dart, Android Studio, and emulators, I have provided pictures and written explanations for all the audit questions below.
+`This app includes:`
 
-Audit Questions
+ * Main Menu ![menu](/assets/images/menu.png)
 
-`Does the app run without crashing?`
-Yes, the app runs smoothly without crashing.
+ * Game Board ![board](/assets/images/board.png)
 
-`Does the app contain all the UI screens requested?`
-
-Yes, the app includes:
-
-Main Menu ![menu](/assets/images/menu.png)
-
-Game Board ![board](/assets/images/board.png)
-
-Waiting Room ![wr](/assets/images/wr.png)
+ * Waiting Room ![wr](/assets/images/wr.png)
 
 
-`Try performing illegal moves (e.g., moving a pawn 3 squares up, castling after moving the king, moving a rook diagonally).`
-The app prevents illegal moves using the Flutter chess package, which validates every move.
 
-`Does the app prevent illegal moves?`
-Yes, it ensures no illegal moves can be made.
+- 🔒 **Move Validation**  
+  Illegal moves are completely prevented. The app uses the `flutter_chess_board` package to validate all moves according to official chess rules.
 
-`Play the game until one player is mated. Does the game end correctly?`
+- 🎮 **Multiplayer Mode**  
+  Play real-time chess matches with another player. Once both players are in the waiting room, simply press the Start button to begin the game!
 
-Yes, the game ends with notifications for checkmate, stalemate, or draw.
-
-`Does the app have a multiplayer mode for real-time matches?`
-Yes, it supports real-time multiplayer gameplay.
-
-`When two players join a game session, does the player with the white pieces play first?`
-Yes, the app enforces that the White player always starts first.
-
-`Does the app have a notification system to alert players when it's their turn?`
-Yes, the app displays a notification at the bottom showing the current turn.
-![turn](/assets/images/turn.png)
-
-`After a move is played, does the other player receive the move?`
-Yes, the opponent is notified, and the board updates in real-time.
-
-`Does the game end and notify the winner?`
-Yes, the app notifies the winner or a draw.
+- ♟️ **Turn Indicator**  
+  A notification at the bottom of the board shows whose turn it is.  
+  ![Turn Notification](/assets/images/turn.png)
 
 ![won](/assets/images/won.png)  ![over](/assets/images/over.png)
 
