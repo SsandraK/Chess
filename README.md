@@ -98,7 +98,7 @@ real_time_chess/
 ### :book: Rules of Chess
 
 If you need a refresher on chess rules, you can visit:
-Learn How to Play Chess- `(https://www.chess.com/learn-how-to-play-chess)`
+♟️ [Learn How to Play Chess](https://www.chess.com/learn-how-to-play-chess)
 
-### :point_down: real-time chess 
-`(https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExcnIzOHRhNXB2ejRzanN1dzMwcTJ1cTIxZmVjMGluMzRsZXRpeXF5biZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/eg8EPt472uqFbNyAdB/giphy.gif) `
+
+
